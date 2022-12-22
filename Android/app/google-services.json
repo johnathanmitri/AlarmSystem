@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "127729451778",
+    "project_id": "alarmsystem-3a00c",
+    "storage_bucket": "alarmsystem-3a00c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:127729451778:android:5da84cc75b29693fd2381b",
+        "android_client_info": {
+          "package_name": "com.johnathanmitri.alarmsystem"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "127729451778-choelnav01rpgdtj6e4u8itidtvsgkhg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIm72g_4EKGuJlVcYX7qXELArzJBRj_jI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "127729451778-choelnav01rpgdtj6e4u8itidtvsgkhg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
