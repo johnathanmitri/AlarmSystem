@@ -21,6 +21,17 @@ exports.onMessageRecieved = function(sender, msgObj)
 
         informZoneEdit(sender.androidId);
     }
+    else if (msgObj.intent === "zoneAction")
+    {
+        arduinoManager.zoneAction(msgObj.id, successful =>
+        {
+            sender.send(JSON.stringify(
+            {
+                intent: "zoneActionResult",
+                result: successful
+            }));  // send a response to the device, and inform it whether or not their action was successful.
+        });
+    }
 }
 
 class RegDevice //this represents a single registered device. 
@@ -41,7 +52,9 @@ sqlManager.makeQuery("SELECT * FROM dbo.FcmDevices", result =>
     result.recordset.forEach(entry =>
     {
         exports.registeredDevices.push(new RegDevice(entry.id, entry.name, entry.regToken, entry.notifsEnabled));
-    });
+    });  //this is blocking
+
+    websocketManager.startListening();
     //exports.userDevices = data.recordSet
 });
 

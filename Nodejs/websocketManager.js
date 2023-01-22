@@ -100,7 +100,7 @@ class WsClient  //this represents each client that is connected over websocket, 
     }
     onMessage(data)
     {
-        console.log(`${this.wsSocket._socket.remoteAddress}:${this.wsSocket._socket.remotePort} has sent us: ${data}`);
+
 
         if (this.authenticated === false)
         { //we still have to authenticate and initialize this client
@@ -220,10 +220,12 @@ class WsClient  //this represents each client that is connected over websocket, 
         }
         else //we have recieved data from an initialized client. we can process requests now
         {
-            console.log("Data Recieved: " + data);
+            console.log(`(Android) ${this.wsSocket._socket.remoteAddress}:${this.wsSocket._socket.remotePort} has sent us: ${data}`);
+            //console.log("Data Recieved: " + data);
+            var jsonData;
             try
             {
-                androidDeviceManager.onMessageRecieved(this, JSON.parse(data));
+                jsonData = JSON.parse(data);
             }
             catch (e)
             {
@@ -231,6 +233,20 @@ class WsClient  //this represents each client that is connected over websocket, 
                     intent: "response",
                     status: "Invalid JSON Data"
                 }));
+                return; 
+            }
+            try
+            {
+                androidDeviceManager.onMessageRecieved(this, jsonData);
+            }
+            catch (e)
+            {
+                this.send(JSON.stringify({
+                    intent: "response",
+                    status: "MESSAGE HANDLING ERROR"
+                }));
+                console.log("MESSAGE HANDLING ERROR");
+                return; 
             }
         }
     }
@@ -256,6 +272,8 @@ class WsClient  //this represents each client that is connected over websocket, 
     }
 }
 
+exports.startListening = function()
+{
 const wsServer = new wsLibrary.Server({ port: wsPort }, function ()
 {
     console.log(`WebSocket server is running on port ${wsPort}`);
@@ -272,4 +290,5 @@ wsServer.on("connection", ws => new WsClient(ws, false)); //gotta host two becau
 wssServer.on("connection", ws => new WsClient(ws, true));
 
 httpsServer.listen(wssPort, () => { console.log(`WebSocket over TLS server is running on port ${wssPort}`) }); //,function(){console.log(`WebSocket server is running on port ${wsPort}`);}
+}
 

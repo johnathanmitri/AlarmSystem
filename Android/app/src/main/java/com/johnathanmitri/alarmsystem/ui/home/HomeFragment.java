@@ -28,6 +28,7 @@ import com.johnathanmitri.alarmsystem.MainActivity;
 import com.johnathanmitri.alarmsystem.R;
 import com.johnathanmitri.alarmsystem.WebsocketManager;
 import com.johnathanmitri.alarmsystem.databinding.FragmentHomeBinding;
+import com.johnathanmitri.alarmsystem.databinding.ZoneEntryBinding;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -88,22 +89,34 @@ public class HomeFragment extends Fragment {
             TextView text = new TextView(getContext());
             text.setText((String)this.getItem(position));
             zoneEntry.addView(text);*/
-            FrameLayout zoneEntry = (FrameLayout)getActivity().getLayoutInflater().inflate(R.layout.zone_entry, parent, false);
 
-            //zoneEntry.setCardBackgroundColor(Color.WHITE);
-            CardView cardView = (CardView)zoneEntry.getChildAt(0);
-            LinearLayout horizLinearLayout = (LinearLayout)cardView.getChildAt(0);
-
-            LinearLayout leftLinearLayout = (LinearLayout)horizLinearLayout.getChildAt(0);
-            LinearLayout rightLinearLayout = (LinearLayout)horizLinearLayout.getChildAt(1);
-
-            SwitchCompat muteZoneSwitch = (SwitchCompat)leftLinearLayout.getChildAt(1);
-
+            ZoneEntryBinding zoneEntryBinding = ZoneEntryBinding.inflate(getActivity().getLayoutInflater());
+                    //getActivity().getLayoutInflater().inflate(R.layout.zone_entry, parent, false);
+            FrameLayout zoneEntry = zoneEntryBinding.getRoot(); //(FrameLayout)getActivity().getLayoutInflater().inflate(R.layout.zone_entry, parent, false);
 
             ZoneEntryObj entryObj = (ZoneEntryObj)this.getItem(position);
 
-            muteZoneSwitch.setChecked(entryObj.muted);
-            muteZoneSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            if (true)
+            {
+                zoneEntryBinding.actionButton.setVisibility(View.VISIBLE);
+                zoneEntryBinding.actionButton.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        try
+                        {
+                            JSONObject jsonMsg = new JSONObject();
+                            jsonMsg.put("intent", "zoneAction");
+                            jsonMsg.put("id", entryObj.id);
+                            WebsocketManager.send(jsonMsg.toString());
+                        } catch (JSONException e) {}
+                    }
+                });
+            }
+
+            zoneEntryBinding.muteZoneSwitch.setChecked(entryObj.muted);
+            zoneEntryBinding.muteZoneSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     Toast.makeText(getActivity().getApplicationContext(), String.format("Notifications will%s be shown for %s on all devices.", isChecked? " no longer": "", entryObj.name), Toast.LENGTH_SHORT).show();
                     entryObj.muted = isChecked;
@@ -117,26 +130,28 @@ public class HomeFragment extends Fragment {
                     } catch (JSONException e) {}
                 }
             });
-            TextView zoneName = (TextView)leftLinearLayout.getChildAt(0);
-            TextView zoneState = (TextView)rightLinearLayout.getChildAt(0);
+            //TextView zoneName = (TextView)leftLinearLayout.getChildAt(0);
+            //TextView zoneState = (TextView)rightLinearLayout.getChildAt(0);
 
-            zoneName.setText(entryObj.name);
+
+
+            zoneEntryBinding.zoneName.setText(entryObj.name);
             if (entryObj.state == -1)
             {
-                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OfflineGrey));
-                zoneState.setText("Offline");
+                zoneEntryBinding.cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OfflineGrey));
+                zoneEntryBinding.zoneState.setText("Offline");
                 //set text offline
             }
             else if (entryObj.state == 0)
             {
-                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OpenRed));
-                zoneState.setText("Open");
+                zoneEntryBinding.cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OpenRed));
+                zoneEntryBinding.zoneState.setText("Open");
                 //set text open
             }
             else
             {
-                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.ClosedBlue));
-                zoneState.setText("Closed");
+                zoneEntryBinding.cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.ClosedBlue));
+                zoneEntryBinding.zoneState.setText("Closed");
             }
 
 
