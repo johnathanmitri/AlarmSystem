@@ -22,12 +22,14 @@ import com.johnathanmitri.alarmsystem.ui.home.HomeFragment;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,6 +39,8 @@ public class WebsocketManager
     //private static MainActivity mainActivity;
     private static Context mainActivityContext;
     public static HomeFragment homeFragment;
+
+    public static ArrayList<ZoneEntryObj> orderedZoneArray = new ArrayList<ZoneEntryObj>();
 
     static boolean registered;
     static int androidId;
@@ -80,7 +84,7 @@ public class WebsocketManager
 
         WifiManager wifiManager = (WifiManager) mainActivityContext.getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
-        String ssid  = info.getSSID();
+        String ssid = info.getSSID();
 
         if (possibleNetworkNames.contains(ssid))
         {
@@ -212,12 +216,20 @@ public class WebsocketManager
                             JSONObject jsonData = new JSONObject(messageStr);
                             if (jsonData.getString("intent").equals("updateZones"))
                             {
-                                if (homeFragment != null && homeFragment.isVisible())
-                                {
+
                                     int zoneId = -1;  //default value of -1 means that no zoneId was sent by server.
                                     if (jsonData.has("zoneIdUpdated"))
                                         zoneId = jsonData.getInt("zoneIdUpdated");
-                                    homeFragment.updateZones(jsonData.getJSONArray("zones"), zoneId);
+
+
+                                    updateZones(jsonData.getJSONArray("zones"), zoneId);
+
+                            }
+                            else if (jsonData.getString("intent").equals("getZoneEventsResult"))
+                            {
+                                if (homeFragment != null && homeFragment.isVisible())
+                                {
+                                    homeFragment.updateZones();
                                 }
                             }
                         }
@@ -289,4 +301,64 @@ public class WebsocketManager
         }
         return 0;
     }
+
+    private static void updateZones(JSONArray jsonArray, int zoneId )
+    {
+        /*boolean wasNull = false;
+        if (orderedZoneArray.isEmpty())
+        {
+            wasNull = true;
+        }*/
+        orderedZoneArray.clear();
+
+        JSONObject[] jsonObjArray = new JSONObject[jsonArray.length()];
+        //orderedZoneArray = new ZoneEntryObj[jsonArray.length()];
+        try
+        {
+            int orderedCount = 0;
+            for (int i = 0; i < jsonObjArray.length; i++)
+            {
+                JSONObject obj = jsonArray.getJSONObject(i);
+                jsonObjArray[i] = obj;
+                if (obj.getInt("state") == 0)
+                {
+                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(obj.getString("name"), 0);
+                    orderedZoneArray.add(new ZoneEntryObj(obj));
+                    orderedCount++;
+                }
+            }
+            for (int i = 0; i < jsonObjArray.length; i++)
+            {
+                if (jsonObjArray[i].getInt("state") == -1)
+                {
+                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), -1);
+                    orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
+                    orderedCount++;
+                }
+            }
+            for (int i = 0; i < jsonObjArray.length; i++)
+            {
+                if (jsonObjArray[i].getInt("state") == 1)
+                {
+                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), 1);
+                    orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
+                    orderedCount++;
+                }
+
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return;
+        }
+
+        if (homeFragment != null && homeFragment.isVisible())
+        {
+            homeFragment.updateZones();
+        }
+
+
+    }
+
 }

@@ -2,7 +2,7 @@ var notificationManager = require('./notificationManager.js');
 var websocketManager = require('./websocketManager.js');
 const sqlManager = require('./sqlManager.js');
 var arduinoManager = require("./arduinoManager.js");
-
+var loggingManager = require("./loggingManager.js");
 
 exports.registeredDevices = [];    //this represents all the registered android users we have. each entry is a device. 
 //they are in this list regardless of whether or not they are currently connected.
@@ -30,6 +30,17 @@ exports.onMessageRecieved = function(sender, msgObj)
                 intent: "zoneActionResult",
                 result: successful
             }));  // send a response to the device, and inform it whether or not their action was successful.
+        });
+    }
+    else if (msgObj.intent === "getZoneEvents")
+    {
+        loggingManager.getZoneEvents(msgObj.id, arr=>
+        {
+            sender.send(JSON.stringify(
+            {
+                intent: "getZoneEventsResult",
+                eventsArray: arr
+            }));
         });
     }
 }

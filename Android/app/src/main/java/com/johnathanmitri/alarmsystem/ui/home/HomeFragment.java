@@ -4,7 +4,11 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -27,6 +31,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.johnathanmitri.alarmsystem.MainActivity;
 import com.johnathanmitri.alarmsystem.R;
 import com.johnathanmitri.alarmsystem.WebsocketManager;
+import com.johnathanmitri.alarmsystem.ZoneEntryObj;
 import com.johnathanmitri.alarmsystem.databinding.FragmentHomeBinding;
 import com.johnathanmitri.alarmsystem.databinding.ZoneEntryBinding;
 
@@ -34,40 +39,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
 
-    private ArrayList<ZoneEntryObj> orderedZoneArray = new ArrayList<ZoneEntryObj>();
 
+
+    //final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat., Locale.ENGLISH);
+    final SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm aa");
 
     private zoneListAdapter<ZoneEntryObj> adapter;
 
-    public class ZoneEntryObj
-    {
-        public int id;
-        public String name;
-        public boolean muted;
-        public int state;
 
-        public ZoneEntryObj(int i, String n, boolean m, int s)
-        {
-            id = i;
-            name = n;
-            muted = m;
-            state = s;
-        }
-
-        public ZoneEntryObj(JSONObject obj) throws JSONException
-        {
-            id = obj.getInt("id");
-            name = obj.getString("name");
-            muted = obj.getBoolean("muted");
-            state = obj.getInt("state");
-        }
-    }
 
     private class zoneListAdapter<T> extends ArrayAdapter<T>
     {
@@ -90,13 +82,58 @@ public class HomeFragment extends Fragment {
             text.setText((String)this.getItem(position));
             zoneEntry.addView(text);*/
 
+
+
             ZoneEntryBinding zoneEntryBinding = ZoneEntryBinding.inflate(getActivity().getLayoutInflater());
                     //getActivity().getLayoutInflater().inflate(R.layout.zone_entry, parent, false);
             FrameLayout zoneEntry = zoneEntryBinding.getRoot(); //(FrameLayout)getActivity().getLayoutInflater().inflate(R.layout.zone_entry, parent, false);
 
             ZoneEntryObj entryObj = (ZoneEntryObj)this.getItem(position);
 
-            if (true)
+            //zoneEntryBinding.cardView.context
+
+            zoneEntryBinding.cardView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener()
+            {
+                @Override
+                public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+                {
+                   // super.onCreateContextMenu(menu, v, menuInfo);
+                    // you can set menu header with title icon etc
+                    //menu.setHeaderTitle("Zone");
+                    // add menu items
+                    MenuItem zoneHistory = menu.add(0, v.getId(), 0, "View Zone History");
+                    zoneHistory.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener()
+                    {
+                        @Override
+                        public boolean onMenuItemClick(@NonNull MenuItem item)
+                        {
+                            try
+                            {
+                                JSONObject jsonMsg = new JSONObject();
+                                jsonMsg.put("intent", "getZoneEvents");
+                                jsonMsg.put("id", entryObj.id);
+                                WebsocketManager.send(jsonMsg.toString());
+
+                            } catch (JSONException e) {}
+                            return true;
+                        }
+                    });
+                    //menu.add(0, v.getId(), 0, "Gray");
+                    //menu.add(0, v.getId(), 0, "Cyan");
+                }
+            });
+
+            /*zoneEntryBinding.cardView.setOnLongClickListener(new View.OnLongClickListener()
+            {
+                @Override
+                public boolean onLongClick(View v)
+                {
+                    Log.e("LONG CLICK", "LONG CLICK DETECTED");
+                    return true;
+                }
+            });*/
+
+            if (entryObj.userControl.equals("GarageDoor"))
             {
                 zoneEntryBinding.actionButton.setVisibility(View.VISIBLE);
                 zoneEntryBinding.actionButton.setOnClickListener(new View.OnClickListener()
@@ -154,62 +191,28 @@ public class HomeFragment extends Fragment {
                 zoneEntryBinding.zoneState.setText("Closed");
             }
 
+            if (entryObj.timeStamp != null)
+            {
+                zoneEntryBinding.timeStamp.setText("Since " +  dateFormat.format(entryObj.timeStamp));
+            }
+            else
+            {
+                zoneEntryBinding.timeStamp.setText("Timestamp Error");
+            }
 
             return zoneEntry;
         }
     }
 
-    public void updateZones(JSONArray jsonArray, int zoneId)
+    public void updateZones()//JSONArray jsonArray, int zoneId)
     {
-        boolean wasNull = false;
-        if (orderedZoneArray.isEmpty())
-        {
-            wasNull = true;
-        }
-        orderedZoneArray.clear();
-
-        JSONObject[] jsonObjArray = new JSONObject[jsonArray.length()];
-        //orderedZoneArray = new ZoneEntryObj[jsonArray.length()];
-        try
-        {
-            int orderedCount = 0;
-            for (int i = 0; i < jsonObjArray.length; i++)
-            {
-                JSONObject obj = jsonArray.getJSONObject(i);
-                jsonObjArray[i] = obj;
-                if (obj.getInt("state") == 0)
-                {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(obj.getString("name"), 0);
-                    orderedZoneArray.add(new ZoneEntryObj(obj));
-                    orderedCount++;
-                }
-            }
-            for (int i = 0; i < jsonObjArray.length; i++)
-            {
-                if (jsonObjArray[i].getInt("state") == -1)
-                {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), -1);
-                    orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
-                    orderedCount++;
-                }
-            }
-            for (int i = 0; i < jsonObjArray.length; i++)
-            {
-                if (jsonObjArray[i].getInt("state") == 1)
-                {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), 1);
-                    orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
-                    orderedCount++;
-                }
-
-            }
             ListView listView = (ListView) binding.getRoot().findViewById(R.id.listView);
-            if (wasNull)
+            if (adapter == null)
             {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+                        adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, WebsocketManager.orderedZoneArray);
                         listView.setAdapter(adapter);
                     }
                 });
@@ -220,6 +223,8 @@ public class HomeFragment extends Fragment {
                     @Override
                     public void run() {
                         //if (zoneId == -1)
+                        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+                        //listView.setAdapter(adapter);
                             adapter.notifyDataSetChanged();
                             /*
                         else
@@ -239,11 +244,7 @@ public class HomeFragment extends Fragment {
                 });
 
             }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+
     }
 
 
@@ -255,6 +256,8 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        adapter = null;
+        //Toast.makeText(getActivity().getApplicationContext(), "FRAGMENT CREATED", Toast.LENGTH_SHORT).show();
 
         //listView.requestLayout();
 /*
@@ -288,6 +291,14 @@ public class HomeFragment extends Fragment {
         return root;
     }
 
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+        //((ListView)binding.getRoot().findViewById(R.id.listView)).setAdapter(adapter);
+        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+    }
 
 
 

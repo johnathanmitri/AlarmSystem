@@ -1,7 +1,15 @@
 #include <EthernetENC.h>
 #include <MemoryUsage.h>
 
-static byte mymac[] = { 0x70, 0x69, 0x69, 0x2D, 0x30, 0x31 };
+/*
+collector power input
+
+emitter emits to ground
+
+base is signal
+*/
+
+static byte mymac[] = { 0x11, 0x69, 0x69, 0x2E, 0x3B, 0x31 };
 
 static byte serverIp[] = {192, 168, 254, 143};
 
@@ -23,13 +31,10 @@ struct Zone
 };
 
 Zone zoneArr[] = {
-  {1, 44, false},
-  {2, 22, false},
-  {3, 23, false}, //garage door
-  {4, 24, false},
-  {5, 25, false},
-  {6, 26, false}
+  {3, 3, false}, //garage door
 };
+
+int garageDoorActionPin = 7;
 
 static int garageDoorId = 3;
 
@@ -41,20 +46,25 @@ byte msgBuf[zoneCount*2];
 
 void setup() 
 {
-  Serial.begin(57600);  
+  Serial.begin(9600);  
 
   for (int i = 0; i < zoneCount; i++)
   { 
     pinMode(zoneArr[i].buttonPin, INPUT_PULLUP);
   }
   
+  pinMode(garageDoorActionPin, OUTPUT);
+
   pinMode(41, OUTPUT);
-  
+  Ethernet.init(10);  //set slave select pin
+
+  Serial.println("Before Ethernet Begin");
   Ethernet.begin(mymac);
 
   delay(1000);
   Ethernet.maintain();
   
+  Serial.println("Before Server Begin");
   server.begin();
   sendAllZones();
   //sendMessage(zoneCount*2);  //send whole buffer.
@@ -76,14 +86,15 @@ void loop ()
       }
       if (memcmp(recieveBuffer, magicPacket, 7) == 0)
       {
-        Serial.print("RECIEVED MAGIC PACKET FOR ZONE "); 
-        Serial.println(recieveBuffer[7]);
+        //Serial.print("RECIEVED MAGIC PACKET FOR ZONE "); 
+        //Serial.println(recieveBuffer[7]);
         if (recieveBuffer[7] == garageDoorId)
         {
           client.write("success");
-          digitalWrite(41,HIGH);
+          client.flush();
+          digitalWrite(garageDoorActionPin,HIGH);
           delay(500);
-          digitalWrite(41,LOW);
+          digitalWrite(garageDoorActionPin,LOW);
         }
         else
         {
@@ -129,12 +140,10 @@ void loop ()
 
   if((unsigned long)(millis() - lastTime) > updatePeriod)  //this protects against overflow issues when millis() gets to the max value. 
   {
-    Serial.println("Keep alive");
+    //Serial.println("Keep alive");
 
     sendAllZones();
   }
-  
-  //FREERAM_PRINT
 }
 
 void sendAllZones()

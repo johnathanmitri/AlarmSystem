@@ -73,7 +73,7 @@ exports.notifyDevices = function (regTokens, zone)   //maybe use something like 
             notification: {
                 //image: 'https://image.cnbcfm.com/api/v1/image/106878527-1620223837055-106748412-1602881184740-biden.jpg?v=1620224062',
                 title: zone.name + titleString,
-                body: zone.name + bodyString + new Date().toLocaleTimeString("en-US", {
+                body: zone.name + bodyString + zone.timeStamp.toLocaleTimeString("en-US", {
                     timeZone: "America/Los_Angeles"
                   }),//data.toString('ascii'),
                 channel_id: 'AlarmChannel',

@@ -1,0 +1,8 @@
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\bin\Release\AlarmSystemSoundPlayer.exe.config
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\bin\Release\AlarmSystemSoundPlayer.exe
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\bin\Release\AlarmSystemSoundPlayer.pdb
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\obj\Release\AlarmSystemSoundPlayer.csproj.AssemblyReference.cache
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\obj\Release\AlarmSystemSoundPlayer.csproj.SuggestedBindingRedirects.cache
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\obj\Release\AlarmSystemSoundPlayer.csproj.CoreCompileInputs.cache
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\obj\Release\AlarmSystemSoundPlayer.exe
+D:\Dev\Github\AlarmSystem\C#\AlarmSystemSoundPlayer\AlarmSystemSoundPlayer\obj\Release\AlarmSystemSoundPlayer.pdb
