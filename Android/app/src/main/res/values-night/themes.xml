@@ -9,6 +9,9 @@
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@color/white</item>
+
+
+
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="android:navigationBarColor">@color/black</item>
@@ -19,4 +22,5 @@
 
         <!-- Customize your theme here. -->
     </style>
+    <item name="connectingBackgroundColor" type="color">@color/pitch_black</item>
 </resources>

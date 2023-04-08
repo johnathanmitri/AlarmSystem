@@ -1,29 +1,19 @@
 package com.johnathanmitri.alarmsystem;
 
-import static android.content.ContentValues.TAG;
-
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -32,15 +22,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.johnathanmitri.alarmsystem.databinding.ActivityMainBinding;
-
-
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
-
-import java.io.IOException;
-import java.net.URI;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -155,14 +137,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop()
     {
-        WebsocketManager.closeWebSocket();
+        WebsocketManager.close();
         super.onStop();
     }
 
     @Override
     protected void onResume()
     {
-        if (!WebsocketManager.open)
+        if (!WebsocketManager.isOpen())
             (new WebsocketManager.connectAsyncTask()).execute(this);
         super.onResume();
     }

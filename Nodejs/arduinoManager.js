@@ -55,7 +55,10 @@ const timer = setInterval(function keepAlive()
         zone.isAlive = false;
     });
     if (zonesUpdated.length > 0)
+    {
         androidDeviceManager.informDevices(zonesUpdated); //inform the devices that the zone(s) went offline
+        loggingManager.logZoneEvents(zonesUpdated);
+    }
 
 }, 7500);  //7.5 seconds. Arduino should send every 5. 
 
@@ -156,7 +159,6 @@ function onClientConnection(sock)  //on arduino connection
         if (zonesUpdated.length > 0)
         {
             androidDeviceManager.informDevices(zonesUpdated);
-            //speakerManager.inform(zonesUpdated); 
             loggingManager.logZoneEvents(zonesUpdated);
         }
 

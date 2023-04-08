@@ -30,7 +30,8 @@ const timer = setInterval(function ping()
     {
         if (wsClient.destroyed)
         {
-            console.log("Destroyed client in list, id" + wsClient.clientID);   //this is bad. this should never happen.
+            //this is bad. this should never happen.
+            console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nDestroyed client in list, id" + wsClient.clientID);   
             return;
         }
         if (wsClient.authenticated)
@@ -252,7 +253,17 @@ class WsClient  //this represents each client that is connected over websocket, 
     }
     send(data)
     {
-        this.wsSocket.send(data);
+        // these checks and try statement are to make sure that it will never crash. its a sort of last-ditch effort to prevent crashes.
+        // in normal operation these should be unecessary, but we don't ever want it to crash, such as in the case that a client goes into an infinite loop of 
+        // connecting and disconnecting extremely quickly, which could cause the websocket to close/error at an unexpected time.
+        if (typeof this.wsSocket != "undefined" && this.wsSocket.readyState === wsLibrary.WebSocket.OPEN) 
+        {
+            try
+            {
+                this.wsSocket.send(data);
+            }
+            catch {}
+        }
     }
     destroy()
     {

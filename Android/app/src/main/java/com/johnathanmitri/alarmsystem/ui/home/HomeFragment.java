@@ -1,5 +1,8 @@
 package com.johnathanmitri.alarmsystem.ui.home;
 
+import static com.johnathanmitri.alarmsystem.WebsocketManager.homeFragment;
+
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -34,11 +37,14 @@ import com.johnathanmitri.alarmsystem.WebsocketManager;
 import com.johnathanmitri.alarmsystem.ZoneEntryObj;
 import com.johnathanmitri.alarmsystem.databinding.FragmentHomeBinding;
 import com.johnathanmitri.alarmsystem.databinding.ZoneEntryBinding;
+import com.johnathanmitri.alarmsystem.databinding.ZoneEventsPopupBinding;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -55,11 +61,12 @@ public class HomeFragment extends Fragment {
 
 
     //final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat., Locale.ENGLISH);
-    final SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm aa");
+    final SimpleDateFormat dateFormat = new SimpleDateFormat("M-dd-yyyy' at 'h:mm aa");;//SimpleDateFormat("h:mm aa");
+    SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
     private zoneListAdapter<ZoneEntryObj> adapter;
 
-
+    private static ArrayList<ZoneEntryObj> listViewSource = new ArrayList<ZoneEntryObj>();
 
     private class zoneListAdapter<T> extends ArrayAdapter<T>
     {
@@ -204,28 +211,36 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public void updateZones()//JSONArray jsonArray, int zoneId)
+    public void updateZoneList(ArrayList<ZoneEntryObj> orderedZoneArray)//JSONArray jsonArray, int zoneId)
     {
-            ListView listView = (ListView) binding.getRoot().findViewById(R.id.listView);
-            if (adapter == null)
+        getActivity().runOnUiThread(new Runnable() {
+
+            @Override
+            public void run()
             {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, WebsocketManager.orderedZoneArray);
-                        listView.setAdapter(adapter);
-                    }
-                });
-            }
-            else   //we have already created the listView before
-            {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //if (zoneId == -1)
-                        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
-                        //listView.setAdapter(adapter);
-                            adapter.notifyDataSetChanged();
+                listViewSource.clear();
+                listViewSource.addAll(orderedZoneArray);
+                refreshListView();
+                // listView = ;
+
+            }});
+    }
+
+    private void refreshListView()
+    {
+        if (adapter == null)
+        {
+
+            adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, listViewSource);
+            binding.listView.setAdapter(adapter);
+        }
+        else   //we have already created the listView before
+        {
+
+            //if (zoneId == -1)
+            //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+            //listView.setAdapter(adapter);
+            adapter.notifyDataSetChanged();
                             /*
                         else
                         {
@@ -240,13 +255,99 @@ public class HomeFragment extends Fragment {
                                 }
                         }*/
 
-                    }
-                });
-
-            }
-
+        }
     }
 
+    public void onWebsocketOpened()
+    {
+        homeFragment.getActivity().runOnUiThread(new Runnable()
+        {
+            public void run()
+            {
+                binding.disconnectedOverlay.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    public void onWebsocketClosed()
+    {
+        homeFragment.getActivity().runOnUiThread(new Runnable()
+        {
+            public void run()
+            {
+                binding.disconnectedOverlay.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    public void showEventsWindow(byte[] eventBytes)
+    {
+        final int EVENT_SIZE = 9; //each event is 9 bytes long
+
+        ByteBuffer eventBuffer = ByteBuffer.wrap(eventBytes);
+        eventBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
+        //View zoneEventsPopupView = getLayoutInflater().inflate(R.layout.zone_events_popup, null);
+        ZoneEventsPopupBinding zoneEventsPopupBinding = ZoneEventsPopupBinding.inflate(getLayoutInflater());
+
+        String text = "";
+
+        //try
+        //{
+            /*
+            for (int i = jsonArray.length() -1; i >= 0; i--)
+            {
+                JSONObject event = jsonArray.getJSONObject(i);*/
+                //text += event.getString("name");
+            //for (int i = eventBytes.length - EVENT_SIZE; i >= 0; i -= EVENT_SIZE)  //start at the last event and iterate backwards.
+            //{
+            while (eventBuffer.remaining() >= 9)
+            {
+                //JSONObject event = jsonArray.getJSONObject(i);
+                //switch (event.getInt("state")
+                String line = "";
+                switch (eventBuffer.get()) // the first byte is the state, the next 8 is the timestamp
+                {
+                    case -1:
+                        line += "Offline at ";
+                        break;
+                    case 0:
+                        line += "Opened at ";
+                        break;
+                    case 1:
+                        line += "Closed at ";
+                        break;
+                }
+
+                Date time;
+                try
+                {
+                    //time = isoFormat.parse(event.getString("timeStamp"))
+                    long test = eventBuffer.getLong();
+                    time = new Date(test);
+
+                }
+                catch (Exception e)
+                {
+                    time = null;
+                }
+
+                line += dateFormat.format(time) + "\n";
+                text = line + text; //push them to the top, in order to reverse the list.
+            }
+        //}
+        //catch (JSONException e) {}
+
+        zoneEventsPopupBinding.textView2.setText(text);
+
+        dialogBuilder.setView(zoneEventsPopupBinding.getRoot());
+
+        AlertDialog dialog = dialogBuilder.create();
+
+        dialog.show();
+
+    }
 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -282,7 +383,7 @@ public class HomeFragment extends Fragment {
 
 
 
-        WebsocketManager.homeFragment = this;
+        homeFragment = this;
 
         //ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, testArr);
 
@@ -295,9 +396,11 @@ public class HomeFragment extends Fragment {
     public void onResume()
     {
         super.onResume();
-        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
-        //((ListView)binding.getRoot().findViewById(R.id.listView)).setAdapter(adapter);
-        //adapter = new zoneListAdapter(getContext(), android.R.layout.simple_list_item_1, orderedZoneArray);
+
+        binding.disconnectedOverlay.setVisibility(WebsocketManager.isOpen() ? View.GONE : View.VISIBLE);
+
+        if (WebsocketManager.isOpen())
+            refreshListView();
     }
 
 

@@ -34,12 +34,12 @@ exports.onMessageRecieved = function(sender, msgObj)
     }
     else if (msgObj.intent === "getZoneEvents")
     {
-        loggingManager.getZoneEvents(msgObj.id, arr=>
+        loggingManager.getZoneEvents(msgObj.id, buffer=>
         {
             sender.send(JSON.stringify(
             {
                 intent: "getZoneEventsResult",
-                eventsArray: arr
+                eventsBuffer: buffer.toString("base64")
             }));
         });
     }
@@ -95,9 +95,12 @@ exports.connectDevice = function (wsClient, androidId, callback)
     }
     else if (exports.registeredDevices[deviceIndex].connected == true)
     {
-        console.log(`Connection Failure: Device Id ${androidId} is already connected.`);
-        callback(`Connection Failure: Device Id ${androidId} is already connected.`);
-        return;
+        //console.log(`Connection Failure: Device Id ${androidId} is already connected.`);
+        //callback(`Connection Failure: Device Id ${androidId} is already connected.`);
+        //return;
+
+        console.log(`Device Id ${androidId} is already connected. Destroying old connection.`);
+        exports.registeredDevices[deviceIndex].wsClient.destroy();
     }
 
     exports.registeredDevices[deviceIndex].connected = true;

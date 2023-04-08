@@ -50,6 +50,7 @@ void setup()
   
   pinMode(41, OUTPUT);
   
+  Serial.println("Ethernet.begin()....");
   Ethernet.begin(mymac);
 
   delay(1000);

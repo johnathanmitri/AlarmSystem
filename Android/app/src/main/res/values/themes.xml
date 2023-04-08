@@ -25,7 +25,7 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-
+    <item name="connectingBackgroundColor" type="color">@color/white</item>
 
     <style name="Theme.AlarmSystem.AppBarOverlay" parent="ThemeOverlay.AppCompat.Light" />
 

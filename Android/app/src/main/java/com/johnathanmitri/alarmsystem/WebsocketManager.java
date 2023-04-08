@@ -8,12 +8,11 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
+import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -26,11 +25,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class WebsocketManager
@@ -40,14 +37,16 @@ public class WebsocketManager
     private static Context mainActivityContext;
     public static HomeFragment homeFragment;
 
-    public static ArrayList<ZoneEntryObj> orderedZoneArray = new ArrayList<ZoneEntryObj>();
+    private static ArrayList<ZoneEntryObj> orderedZoneArray = new ArrayList<ZoneEntryObj>();
 
     static boolean registered;
     static int androidId;
 
-    public static boolean open = false;
-    public static boolean initialized = false;
-    static boolean authenticated = false;
+    private static boolean open = false; // whether or not we want it to be open.
+    private static boolean connected = false; // whether or not the websocket is actually connected to the server
+    private static boolean authenticated = false; // whether or not we have authenticated with the server
+    public static boolean initialized = false; // whether or not we have initialized with the server
+
 
     public static class connectAsyncTask extends AsyncTask<Context, Integer, Integer>
     {
@@ -55,21 +54,26 @@ public class WebsocketManager
         protected Integer doInBackground(Context... contexts)
         {
             mainActivityContext = contexts[0];
+            open = true;
             connect();
             return 0;
         }
     }
 
+    public static boolean isOpen()
+    {
+        return open; // this is whether we WANT it open, not whether the websocket actually IS open.
+    }
+
     public static void send(String msg)
     {
-        wsClient.send(msg);
+        if (wsClient.isOpen())
+            wsClient.send(msg);
     }
 
     public static void connect()
     {
-        open = true;
-        initialized = false;
-        authenticated = false;
+        close();
 
         SharedPreferences regPrefs = mainActivityContext.getSharedPreferences("RegPrefs", Context.MODE_PRIVATE);
         registered = regPrefs.getBoolean("isRegistered", false);  //default value is false if this value does not exist
@@ -96,7 +100,6 @@ public class WebsocketManager
             Log.d("WE ARE NOT ON LOCAL NETWORK", "WE ARE NOT ON LOCAL NETWORK!");
             openWebSocket("wss://" + nameToUseWAN + ":3819", true);
         }
-
 /*
         try (java.util.Scanner s = new java.util.Scanner(new java.net.URL("https://checkip.amazonaws.com/").openStream(), "UTF-8").useDelimiter("\\n|\\A"))
         {
@@ -135,12 +138,13 @@ public class WebsocketManager
 
     }
 
-    public static void closeWebSocket()
+    public static void close()
     {
-        wsClient.close();
         open = false;
         initialized = false;
         authenticated = false;
+        if (wsClient != null)
+            wsClient.close();
     }
 
     private static int openWebSocket(String url, boolean isSecure)
@@ -154,6 +158,8 @@ public class WebsocketManager
                 {
                     if (wsClient.isOpen())
                     {
+                        open = true;
+                        homeFragment.onWebsocketOpened();
                         JSONObject authentication = Auth.getAuth(isSecure);
                         try
                         {
@@ -229,13 +235,23 @@ public class WebsocketManager
                             {
                                 if (homeFragment != null && homeFragment.isVisible())
                                 {
-                                    homeFragment.updateZones();
+                                    String encodedBuffer = jsonData.getString("eventsBuffer");
+                                    byte[] decodedBytes = Base64.decode(encodedBuffer, Base64.DEFAULT);
+                                    homeFragment.getActivity().runOnUiThread(new Runnable()
+                                    {
+                                        public void run()
+                                        {
+                                            homeFragment.showEventsWindow(decodedBytes);
+                                        }
+                                    });
+                                    //jsonData.
+                                    //homeFragment.updateZones();
                                 }
                             }
                         }
-                        catch (Exception e)
+                        catch (JSONException e)
                         {
-
+                            e.printStackTrace();
                         }
                     }
                     else
@@ -281,19 +297,28 @@ public class WebsocketManager
                 @Override
                 public void onClose(int code, String reason, boolean remote)
                 {
+                    connected = false;
+                    homeFragment.onWebsocketClosed();
 
+                    if (open)
+                        WebsocketManager.connect();
                 }
 
                 @Override
                 public void onError(Exception ex)
                 {
-                    Log.e("ERROR CONNECTING (void)", "");
+                    //connected = false;
+                    //homeFragment.onWebsocketClosed();
+                    Log.e("WEBSOCKET ERROR (void)", "");
                     ex.printStackTrace();
+
+                    //if (open)
+                    //    WebsocketManager.connect();
                 }
             };
             wsClient.connect();
         }
-        catch (Exception e)
+        catch (URISyntaxException e)
         {
             Log.e("ERROR CONNECTING", "");
             e.printStackTrace();
@@ -355,7 +380,7 @@ public class WebsocketManager
 
         if (homeFragment != null && homeFragment.isVisible())
         {
-            homeFragment.updateZones();
+            homeFragment.updateZoneList(orderedZoneArray);
         }
 
 
