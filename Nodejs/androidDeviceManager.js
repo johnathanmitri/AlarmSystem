@@ -9,7 +9,14 @@ exports.registeredDevices = [];    //this represents all the registered android 
 
 exports.onMessageRecieved = function(sender, msgObj)
 {
-    if (msgObj.intent === "muteZone")
+    if (msgObj.intent === "ping")
+    {
+        sender.send(JSON.stringify(
+        {
+            intent: "pong"
+        }));
+    }
+    else if (msgObj.intent === "muteZone")
     {
         sqlManager.makeQuery(`UPDATE dbo.Zones SET muted = '${msgObj.value}' WHERE id = '${msgObj.id}';`, result => 
         {

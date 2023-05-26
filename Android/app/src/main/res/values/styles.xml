@@ -13,4 +13,12 @@
         <item name="android:colorForeground">#42221f1f
         </item>
     </style>
+
+    <!--<style name="ArmButton" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+        <item name="colorPrimary">@color/vibrantRed</item>
+        <item name="colorOnPrimary">@color/vibrantRed</item>
+        <item name="android:color">@color/vibrantRed</item>
+    </style> -->
 </resources>

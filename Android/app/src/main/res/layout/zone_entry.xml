@@ -51,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:text="Mute Zone"
                     android:textColor="@color/black"
-                    app:theme="@style/SwitchCompatStyle"
+                    android:theme="@style/SwitchCompatStyle"
 
                     />
 

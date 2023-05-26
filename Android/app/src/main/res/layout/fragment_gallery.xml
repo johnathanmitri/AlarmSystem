@@ -6,6 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".ui.gallery.GalleryFragment">
 
+
+
     <TextView
         android:id="@+id/text_gallery"
         android:layout_width="match_parent"
@@ -19,4 +21,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ToggleButton
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:textOff="Disarmed"
+        android:textOn="Armed"
+        android:background="@drawable/arm_button"
+
+
+        />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -39,7 +39,8 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                     Toast.makeText(getApplicationContext(), "Notifications will not be shown.", Toast.LENGTH_SHORT).show();
-                (new WebsocketManager.connectAsyncTask()).execute(this);
+                //(new WebsocketManager.connectAsyncTask()).execute(this);
+                WebsocketManager.connectAsync(this);
             });
 
     private final ActivityResultLauncher<String> locationPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted ->
@@ -85,12 +86,14 @@ public class MainActivity extends AppCompatActivity
             }
             else
             {
-                (new WebsocketManager.connectAsyncTask()).execute(this); //if we already have permission, then just connect. nothing to wait for.
+                WebsocketManager.connectAsync(this);
+                //(new WebsocketManager.connectAsyncTask()).execute(this); //if we already have permission, then just connect. nothing to wait for.
             }
         }
         else
         {
-            (new WebsocketManager.connectAsyncTask()).execute(this); //if we dont need to request permission, then just connect. nothing to wait for.
+            WebsocketManager.connectAsync(this);
+         //   (new WebsocketManager.connectAsyncTask()).execute(this); //if we dont need to request permission, then just connect. nothing to wait for.
         }
     }
 
@@ -145,7 +148,8 @@ public class MainActivity extends AppCompatActivity
     protected void onResume()
     {
         if (!WebsocketManager.isOpen())
-            (new WebsocketManager.connectAsyncTask()).execute(this);
+            WebsocketManager.connectAsync(this);
+            //(new WebsocketManager.connectAsyncTask()).execute(this);
         super.onResume();
     }
 

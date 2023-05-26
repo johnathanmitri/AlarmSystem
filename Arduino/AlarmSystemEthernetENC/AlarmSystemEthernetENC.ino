@@ -22,6 +22,12 @@ struct Zone
   bool lastMessageClosed;
 };
 
+struct ZoneAction
+{
+  int id;
+  bool (*function)(EthernetClient); // these should be fast, non-blocking function. no sleep in here.
+};
+
 Zone zoneArr[] = {
   {1, 44, false},
   {2, 22, false},
@@ -31,9 +37,16 @@ Zone zoneArr[] = {
   {6, 26, false}
 };
 
-static int garageDoorId = 3;
+bool openGarageDoor(EthernetClient client); // defined towards the bottom of the file
+
+ZoneAction zoneActionArr[] = {
+  {3, &openGarageDoor}  
+};
+
+//static int garageDoorId = 3;
 
 const int zoneCount = sizeof(zoneArr)/sizeof(Zone);  
+const int zoneActionCount = sizeof(zoneActionArr)/sizeof(ZoneAction);
 
 byte msgBuf[zoneCount*2]; 
 
@@ -79,7 +92,32 @@ void loop ()
       {
         Serial.print("RECIEVED MAGIC PACKET FOR ZONE "); 
         Serial.println(recieveBuffer[7]);
-        if (recieveBuffer[7] == garageDoorId)
+        bool found = false;
+        for (int i = 0; i < zoneActionCount; i++)
+        {
+          if (zoneActionArr[i].id == recieveBuffer[7]) // if this element is the zone in question
+          {
+            found = true;
+            bool result = (*zoneActionArr[i].function)(client); // call the function that corresponds to the action
+            if (result == true)
+              client.write("success");
+            else
+            {
+              char msg[] = "bad request for zone id:  ";// + String(recieveBuffer[7]);
+              msg[sizeof(msg)-2]=recieveBuffer[7]+48; // null terminated string. change the second to last byte.
+              client.write(msg);
+            }
+            break;            
+          }
+        }
+        if (!found)
+        {
+          char msg[] = "no zone action for zone id:  ";// + String(recieveBuffer[7]);
+          msg[sizeof(msg)-2]=recieveBuffer[7]+48; // null terminated string. change the second to last byte. 48 is 0 in ascii.
+          client.write(msg);      
+        }
+        
+        /*if (recieveBuffer[7] == garageDoorId)
         {
           client.write("success");
           digitalWrite(41,HIGH);
@@ -89,7 +127,7 @@ void loop ()
         else
         {
           client.write("bad request");
-        }
+        }*/
       }
       else
       {
@@ -101,7 +139,7 @@ void loop ()
       client.read();
     }
     client.flush();
-    client.stop();     
+    client.stop();    
     //client.write(client.read());
   }
 
@@ -111,7 +149,7 @@ void loop ()
     Zone* zone = &zoneArr[i];
     bool isClosed = digitalRead(zone->buttonPin) == LOW;   
 
-    if ((isClosed && zone->lastMessageClosed == false) || (!isClosed && zone->lastMessageClosed == true))   //if (isClosed =! zone.lastMessageClosed)
+    if (isClosed != zone->lastMessageClosed)//(isClosed && zone->lastMessageClosed == false) || (!isClosed && zone->lastMessageClosed == true))   //if (isClosed =! zone.lastMessageClosed)
     {
       msgBuf[(bufSize)] = zone->id;
       msgBuf[(bufSize)+1] = isClosed?1:0;
@@ -135,6 +173,8 @@ void loop ()
     sendAllZones();
   }
   
+  //if ()
+  checkTimeouts();
   //FREERAM_PRINT
 }
 
@@ -167,4 +207,24 @@ void sendMessage(int msgLength)   //Uses the global msgBuf. Data is placed in th
     Serial.println(F("Error connecting to the server. "));
   }
   client.stop();
+}
+
+bool doorTimeoutLock = false;
+void garageDoorTimeoutCallback()
+{
+  digitalWrite(41,LOW);
+  doorTimeoutLock = false;
+}
+
+bool openGarageDoor(EthernetClient client)
+{
+  if (!doorTimeoutLock)  // timeout lock to make sure that another open event isn't started while the other was clicked already. 
+  {
+    digitalWrite(41,HIGH);
+    setTimeout(&garageDoorTimeoutCallback, 300); // simulate pressing the garage door button for ___ milliseconds
+    doorTimeoutLock = true;
+    return true;
+  }
+  return false;
+  //client.write("success");
 }

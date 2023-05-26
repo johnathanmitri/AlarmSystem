@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
@@ -37,27 +38,62 @@ public class WebsocketManager
     private static Context mainActivityContext;
     public static HomeFragment homeFragment;
 
+    private static boolean isAlive = true;
+    private static final int pingTimerInterval = 2000;
+    private static final Handler pingTimerHandler = new Handler();
+    private static final Runnable pingTimerRunnable = new Runnable() {
+        public void run()
+        {
+            if (initialized)
+            {
+                if (!isAlive)
+                {
+                    Log.e("Server timed out.", "Server timed out.");
+                    closeWebsocket();
+                    return;
+                }
+                JSONObject init = new JSONObject();
+                try
+                {
+                    init.put("intent", "ping");
+                }
+                catch (JSONException ignored) {}
+
+                wsClient.send(init.toString());
+                isAlive = false; // this gets set back to true once a pong is received.
+                pingTimerHandler.postDelayed(pingTimerRunnable, pingTimerInterval);
+            }
+            //Toast.makeText(MainActivity.this, "This method is run every 10 seconds", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+
     private static ArrayList<ZoneEntryObj> orderedZoneArray = new ArrayList<ZoneEntryObj>();
 
     static boolean registered;
     static int androidId;
 
     private static boolean open = false; // whether or not we want it to be open.
-    private static boolean connected = false; // whether or not the websocket is actually connected to the server
+    //private static boolean connected = false; // whether or not the websocket is actually connected to the server
     private static boolean authenticated = false; // whether or not we have authenticated with the server
     public static boolean initialized = false; // whether or not we have initialized with the server
 
 
-    public static class connectAsyncTask extends AsyncTask<Context, Integer, Integer>
+    private static class connectAsyncTask extends AsyncTask<Void, Void, Void>
     {
         @Override
-        protected Integer doInBackground(Context... contexts)
+        protected Void doInBackground(Void... voids)
         {
-            mainActivityContext = contexts[0];
-            open = true;
             connect();
-            return 0;
+            return null;
         }
+    }
+
+    public static void connectAsync(Context context)
+    {
+        open = true;
+        mainActivityContext = context;
+        (new connectAsyncTask()).execute();
     }
 
     public static boolean isOpen()
@@ -65,15 +101,20 @@ public class WebsocketManager
         return open; // this is whether we WANT it open, not whether the websocket actually IS open.
     }
 
+    public static boolean isConnected() // whether we are fully logged in with the server
+    {
+        return initialized; // this is whether we have connected to the server, authenticated, and initialized.
+    }
+
     public static void send(String msg)
     {
-        if (wsClient.isOpen())
+        if (wsClient != null && wsClient.isOpen())
             wsClient.send(msg);
     }
 
     public static void connect()
     {
-        close();
+        closeWebsocket();
 
         SharedPreferences regPrefs = mainActivityContext.getSharedPreferences("RegPrefs", Context.MODE_PRIVATE);
         registered = regPrefs.getBoolean("isRegistered", false);  //default value is false if this value does not exist
@@ -141,10 +182,28 @@ public class WebsocketManager
     public static void close()
     {
         open = false;
+        closeWebsocket();
+    }
+
+    // this is for use internally, so that it doesn't set open = false.
+    private static void closeWebsocket()
+    {
         initialized = false;
         authenticated = false;
-        if (wsClient != null)
-            wsClient.close();
+        pingTimerHandler.removeCallbacks(pingTimerRunnable);
+        //if (wsClient != null && wsClient.isOpen())
+        //{
+        try
+        {
+            wsClient.closeConnection(0, "");
+        }catch (Exception ignored) {}
+        //}
+    }
+
+    private static void startPingTimer()
+    {
+        isAlive = true;
+        pingTimerHandler.postDelayed(pingTimerRunnable, pingTimerInterval);
     }
 
     private static int openWebSocket(String url, boolean isSecure)
@@ -153,12 +212,13 @@ public class WebsocketManager
         {
             wsClient = new WebSocketClient(new URI(url))
             {
+
                 @Override
                 public void onOpen(ServerHandshake handshakeData)
                 {
                     if (wsClient.isOpen())
                     {
-                        open = true;
+                        //connected = true;
                         homeFragment.onWebsocketOpened();
                         JSONObject authentication = Auth.getAuth(isSecure);
                         try
@@ -220,7 +280,11 @@ public class WebsocketManager
                         try
                         {
                             JSONObject jsonData = new JSONObject(messageStr);
-                            if (jsonData.getString("intent").equals("updateZones"))
+                            if (jsonData.getString("intent").equals("pong"))
+                            {
+                                isAlive = true;
+                            }
+                            else if (jsonData.getString("intent").equals("updateZones"))
                             {
 
                                     int zoneId = -1;  //default value of -1 means that no zoneId was sent by server.
@@ -276,13 +340,17 @@ public class WebsocketManager
                                 editor.putInt("androidId", jsonData.getInt("androidId"));
                                 editor.apply();
 
-                                initialized = true;
                                 registered = true;
+
+                                initialized = true;
+                                startPingTimer();
                             }
                             else if (!initialized && jsonData.getString("intent").equals("connect") && jsonData.getString("status").equals("success"))
                             {
                                 Log.d("CONNECTED!!!!", "Connected with id: " + jsonData.getInt("androidId"));
+
                                 initialized = true;
+                                startPingTimer();
                             }
                         }
                         catch (Exception e)
@@ -297,7 +365,8 @@ public class WebsocketManager
                 @Override
                 public void onClose(int code, String reason, boolean remote)
                 {
-                    connected = false;
+                    //connected = false;
+                    wsClient = null;
                     homeFragment.onWebsocketClosed();
 
                     if (open)
@@ -311,7 +380,11 @@ public class WebsocketManager
                     //homeFragment.onWebsocketClosed();
                     Log.e("WEBSOCKET ERROR (void)", "");
                     ex.printStackTrace();
+                    wsClient = null;
+                    homeFragment.onWebsocketClosed();
 
+                    if (open)
+                        WebsocketManager.connect();
                     //if (open)
                     //    WebsocketManager.connect();
                 }
@@ -329,45 +402,33 @@ public class WebsocketManager
 
     private static void updateZones(JSONArray jsonArray, int zoneId )
     {
-        /*boolean wasNull = false;
-        if (orderedZoneArray.isEmpty())
-        {
-            wasNull = true;
-        }*/
         orderedZoneArray.clear();
 
         JSONObject[] jsonObjArray = new JSONObject[jsonArray.length()];
         //orderedZoneArray = new ZoneEntryObj[jsonArray.length()];
         try
         {
-            int orderedCount = 0;
             for (int i = 0; i < jsonObjArray.length; i++)
             {
                 JSONObject obj = jsonArray.getJSONObject(i);
                 jsonObjArray[i] = obj;
                 if (obj.getInt("state") == 0)
                 {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(obj.getString("name"), 0);
                     orderedZoneArray.add(new ZoneEntryObj(obj));
-                    orderedCount++;
                 }
             }
             for (int i = 0; i < jsonObjArray.length; i++)
             {
                 if (jsonObjArray[i].getInt("state") == -1)
                 {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), -1);
                     orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
-                    orderedCount++;
                 }
             }
             for (int i = 0; i < jsonObjArray.length; i++)
             {
                 if (jsonObjArray[i].getInt("state") == 1)
                 {
-                    //orderedZoneArray[orderedCount] = new ZoneEntryObj(jsonObjArray[i].getString("name"), 1);
                     orderedZoneArray.add(new ZoneEntryObj(jsonObjArray[i]));
-                    orderedCount++;
                 }
 
             }

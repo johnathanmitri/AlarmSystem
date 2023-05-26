@@ -1,11 +1,13 @@
 package com.johnathanmitri.alarmsystem.ui.home;
 
-import static com.johnathanmitri.alarmsystem.WebsocketManager.homeFragment;
+///import static com.johnathanmitri.alarmsystem.WebsocketManager.homeFragment;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
@@ -30,11 +32,15 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.johnathanmitri.alarmsystem.MainActivity;
 import com.johnathanmitri.alarmsystem.R;
 import com.johnathanmitri.alarmsystem.WebsocketManager;
 import com.johnathanmitri.alarmsystem.ZoneEntryObj;
+import com.johnathanmitri.alarmsystem.ZoneEventObj;
+import com.johnathanmitri.alarmsystem.ZoneState;
 import com.johnathanmitri.alarmsystem.databinding.FragmentHomeBinding;
 import com.johnathanmitri.alarmsystem.databinding.ZoneEntryBinding;
 import com.johnathanmitri.alarmsystem.databinding.ZoneEventsPopupBinding;
@@ -48,11 +54,51 @@ import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+
+class DateFormatter
+{
+    private static final SimpleDateFormat todayFormat = new SimpleDateFormat("h:mm aa");
+    private static final SimpleDateFormat recentDateFormat = new SimpleDateFormat("EEE, MMM d");
+    //private static final SimpleDateFormat yearDateFormat = new SimpleDateFormat("MMM-yyyy");
+
+    public static String getDateString(Date timeStamp)
+    {
+        Calendar today = Calendar.getInstance(); // today
+
+
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(timeStamp); // your date
+
+        /*if (today.get(Calendar.YEAR) != c2.get(Calendar.YEAR))
+        { // if the years are different
+            q
+            // && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)) {
+        }*/
+        if (today.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR))
+        {
+            return todayFormat.format(timeStamp);
+        }
+        else if (today.get(Calendar.DAY_OF_YEAR) - 1 == c2.get(Calendar.DAY_OF_YEAR))
+        {
+            return "Yesterday";
+        }
+        else
+        {
+            return recentDateFormat.format(timeStamp);
+        }
+    }
+
+    //public static String getSpecificDateString(Date timeStamp)
+
+}
 
 public class HomeFragment extends Fragment {
 
@@ -61,8 +107,10 @@ public class HomeFragment extends Fragment {
 
 
     //final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat., Locale.ENGLISH);
-    final SimpleDateFormat dateFormat = new SimpleDateFormat("M-dd-yyyy' at 'h:mm aa");;//SimpleDateFormat("h:mm aa");
+    //;//SimpleDateFormat("h:mm aa");
     SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
+    SimpleDateFormat detailedFormat = new SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm:ss aa");
 
     private zoneListAdapter<ZoneEntryObj> adapter;
 
@@ -180,13 +228,13 @@ public class HomeFragment extends Fragment {
 
 
             zoneEntryBinding.zoneName.setText(entryObj.name);
-            if (entryObj.state == -1)
+            if (entryObj.state == ZoneState.OFFLINE)
             {
                 zoneEntryBinding.cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OfflineGrey));
                 zoneEntryBinding.zoneState.setText("Offline");
                 //set text offline
             }
-            else if (entryObj.state == 0)
+            else if (entryObj.state == ZoneState.OPEN)
             {
                 zoneEntryBinding.cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OpenRed));
                 zoneEntryBinding.zoneState.setText("Open");
@@ -200,7 +248,7 @@ public class HomeFragment extends Fragment {
 
             if (entryObj.timeStamp != null)
             {
-                zoneEntryBinding.timeStamp.setText("Since " +  dateFormat.format(entryObj.timeStamp));
+                zoneEntryBinding.timeStamp.setText("Since " + DateFormatter.getDateString(entryObj.timeStamp));// dateFormat.format(entryObj.timeStamp));
             }
             else
             {
@@ -208,6 +256,86 @@ public class HomeFragment extends Fragment {
             }
 
             return zoneEntry;
+        }
+    }
+
+    public class ZoneEventListAdapter extends RecyclerView.Adapter<ZoneEventListAdapter.ViewHolder> {
+
+        private ArrayList<ZoneEventObj> localDataSet;
+
+        public class ViewHolder extends RecyclerView.ViewHolder
+        {
+           // private final TextView textView;
+
+            public ViewHolder(View view) {
+                super(view);
+                // Define click listener for the ViewHolder's View
+
+             //   textView = (TextView) view.findViewById(R.id.textView);
+            }
+
+            /*public TextView getTextView() {
+              //  return textView;
+            }*/
+        }
+
+        /**
+         * Initialize the dataset of the Adapter
+         *
+         * @param dataSet String[] containing the data to populate views to be used
+         * by RecyclerView
+         */
+        public ZoneEventListAdapter(ArrayList<ZoneEventObj> dataSet) {
+            localDataSet = dataSet;
+        }
+
+        // Create new views (invoked by the layout manager)
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+            // Create a new view, which defines the UI of the list item
+            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.zone_event_entry, viewGroup, false);
+
+            return new ViewHolder(view);
+        }
+
+        // Replace the contents of a view (invoked by the layout manager)
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, final int position) {
+
+            // Get element from your dataset at this position and replace the
+            TextView textViewLeft = viewHolder.itemView.findViewById(R.id.textView2);
+            TextView textViewRight = viewHolder.itemView.findViewById(R.id.textView3);
+            int state = localDataSet.get(position).state;
+            CardView cardView = ((CardView)viewHolder.itemView.findViewById(R.id.cardView));
+            if (state == ZoneState.OFFLINE)
+            {
+                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OfflineGrey));
+                textViewLeft.setText("Offline");
+                //set text offline
+            }
+            else if (state == ZoneState.OPEN)
+            {
+                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.OpenRed));
+                textViewLeft.setText("Open");
+                //set text open
+            }
+            else
+            {
+                cardView.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.ClosedBlue));
+                textViewLeft.setText("Closed");
+            }
+
+            textViewRight.setText(detailedFormat.format(localDataSet.get(position).timeStamp));
+
+            //textView.setText(ZoneState.getStateStringPastTense(localDataSet.get(position).state));
+            // contents of the view with that element
+         //   viewHolder.getTextView().setText(localDataSet[position]);
+        }
+
+        // Return the size of your dataset (invoked by the layout manager)
+        @Override
+        public int getItemCount() {
+            return localDataSet.size();
         }
     }
 
@@ -260,22 +388,24 @@ public class HomeFragment extends Fragment {
 
     public void onWebsocketOpened()
     {
-        homeFragment.getActivity().runOnUiThread(new Runnable()
+        getActivity().runOnUiThread(new Runnable()
         {
             public void run()
             {
-                binding.disconnectedOverlay.setVisibility(View.GONE);
+                if (isVisible())
+                    binding.disconnectedOverlay.setVisibility(View.GONE);
             }
         });
     }
 
     public void onWebsocketClosed()
     {
-        homeFragment.getActivity().runOnUiThread(new Runnable()
+        getActivity().runOnUiThread(new Runnable()
         {
             public void run()
             {
-                binding.disconnectedOverlay.setVisibility(View.VISIBLE);
+                if (isVisible()) // if fragment is visible. if its not it would be an exception.
+                    binding.disconnectedOverlay.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -291,14 +421,20 @@ public class HomeFragment extends Fragment {
         //View zoneEventsPopupView = getLayoutInflater().inflate(R.layout.zone_events_popup, null);
         ZoneEventsPopupBinding zoneEventsPopupBinding = ZoneEventsPopupBinding.inflate(getLayoutInflater());
 
-        String text = "";
+        ArrayList<ZoneEventObj> zoneEvents = new ArrayList<>();
+        while (eventBuffer.remaining() >= 9)
+        {
+            zoneEvents.add(0, new ZoneEventObj(eventBuffer.get(), eventBuffer.getLong())); // add to the front of the list
+        }
+/*
+        StringBuilder text = new StringBuilder();
 
         //try
         //{
             /*
             for (int i = jsonArray.length() -1; i >= 0; i--)
             {
-                JSONObject event = jsonArray.getJSONObject(i);*/
+                JSONObject event = jsonArray.getJSONObject(i);
                 //text += event.getString("name");
             //for (int i = eventBytes.length - EVENT_SIZE; i >= 0; i -= EVENT_SIZE)  //start at the last event and iterate backwards.
             //{
@@ -333,17 +469,24 @@ public class HomeFragment extends Fragment {
                     time = null;
                 }
 
-                line += dateFormat.format(time) + "\n";
-                text = line + text; //push them to the top, in order to reverse the list.
+                line += DateFormatter.getDateString(time) + "\n";//dateFormat.format(time) + "\n";
+                text.insert(0, line); //push them to the top, in order to reverse the list.
             }
         //}
         //catch (JSONException e) {}
 
-        zoneEventsPopupBinding.textView2.setText(text);
+        //zoneEventsPopupBinding.textView2.setText(text.toString());
+*/
+        //zoneEventsPopupBinding.zoneEventsRecyclerView.setAdapter(new ZoneEventListAdapter(new String[]{"Test1", "Test 2", "Test 3"}));
 
+        zoneEventsPopupBinding.zoneEventsRecyclerView.setAdapter(new ZoneEventListAdapter(zoneEvents));
+        zoneEventsPopupBinding.zoneEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        //zoneEventsPopupBinding.zoneEventsRecyclerView.
         dialogBuilder.setView(zoneEventsPopupBinding.getRoot());
-
+        //dialogBuilder.
         AlertDialog dialog = dialogBuilder.create();
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         dialog.show();
 
@@ -383,7 +526,7 @@ public class HomeFragment extends Fragment {
 
 
 
-        homeFragment = this;
+        WebsocketManager.homeFragment = this;
 
         //ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, testArr);
 
@@ -397,10 +540,17 @@ public class HomeFragment extends Fragment {
     {
         super.onResume();
 
-        binding.disconnectedOverlay.setVisibility(WebsocketManager.isOpen() ? View.GONE : View.VISIBLE);
+        binding.disconnectedOverlay.setVisibility(WebsocketManager.isConnected() ? View.GONE : View.VISIBLE);
 
-        if (WebsocketManager.isOpen())
+        if (WebsocketManager.isConnected())
             refreshListView();
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        binding.disconnectedOverlay.setVisibility(View.VISIBLE);
     }
 
 

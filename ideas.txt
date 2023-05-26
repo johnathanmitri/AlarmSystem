@@ -1,0 +1,11 @@
+home page. cards like fing's home page. "3 zones open" .
+
+details screen for the zones. if u click a zone, it will pop up, showing the zone history, zone settings (mute, unmute), ip address
+
+green/red bar across top
+
+circle for arm button
+
+circle with colored outside ring
+
+outside ring with animation that loops around filling it with red

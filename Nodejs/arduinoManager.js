@@ -129,19 +129,19 @@ exports.zoneAction = function (id, callback)
 function onClientConnection(sock)  //on arduino connection
 {
     //Log when an arduino connnects.
-    console.log(`\n\n\n ${sock.remoteAddress}:${sock.remotePort} Connected: ` + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''));
+    //console.log(`\n\n\n ${sock.remoteAddress}:${sock.remotePort} Connected: ` + new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''));
 
     sock.on('data', function (data)
     {
-        console.log(`>> data received : ${data} `);
+        //console.log(`>> data received : ${data} `);
         //sock.end();
 
         var zonesUpdated = [];
 
         for (let i=0; i < data.length; i+=2)
         {
-            console.log("Zone id: " + data[i]);
-            console.log("Zone state: " + data[i+1]);
+            //console.log("Zone id: " + data[i]);
+            //console.log("Zone state: " + data[i+1]);
 
             var zoneIndex = exports.zones.findIndex(o => o.id == data[i]);
             if (exports.zones[zoneIndex].state != data[i+1])  //check to see if state actually changed. the keep alive updates send redundant info.
@@ -160,6 +160,7 @@ function onClientConnection(sock)  //on arduino connection
         {
             androidDeviceManager.informDevices(zonesUpdated);
             loggingManager.logZoneEvents(zonesUpdated);
+            speakerManager.inform(zonesUpdated);
         }
 
         sock.destroy();
@@ -169,7 +170,7 @@ function onClientConnection(sock)  //on arduino connection
 
     sock.on('close', function ()
     {
-        console.log(`${sock.remoteAddress}:${sock.remotePort} Connection closed`);
+        //console.log(`${sock.remoteAddress}:${sock.remotePort} Connection closed`);
     });
 
     sock.on('error', function (error)

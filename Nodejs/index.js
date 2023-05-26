@@ -18,30 +18,43 @@ let userInput = "";
 // question user to enter name
 function ask()
 {
-rl.question("Run command?\n", function (string) {
-  userInput = string;
-
-  console.log("You typed: " + userInput);
-
-  if (userInput == "exit")
+  rl.question("Run command?\n", function (userInput) 
   {
 
-    console.log("Goodbye.");
-    process.exit();
-  }
-  else if (userInput == "test")
-  {
-    loggingManager.getZoneEvents(1, arr=>{
-      console.log(arr);
-    });
-    
-    //console.log(loggingManager.getZoneEvents(1)[1].timeStamp);
-  }
-    //arduinoManager.zoneAction(3, function () {});
-  // close input stream
+    console.log("You typed: " + userInput);
 
-  ask();
-});
+    const tokens = userInput.split(" ");
+
+    if (tokens[0] == "send")
+    {
+      androidDeviceManager.registeredDevices.forEach(function (regDevice)
+      {
+        if (regDevice.connected) 
+        {
+          regDevice.wsClient.send(userInput.substring(userInput.indexOf(" ")+1));
+        }
+      });
+    }
+
+    if (userInput == "exit")
+    {
+
+      console.log("Goodbye.");
+      process.exit();
+    }
+    else if (userInput == "test")
+    {
+      loggingManager.getZoneEvents(1, arr=>{
+        console.log(arr);
+      });
+
+      //console.log(loggingManager.getZoneEvents(1)[1].timeStamp);
+    }
+      //arduinoManager.zoneAction(3, function () {});
+    // close input stream
+
+    ask();
+  });
 }
 
 ask();
