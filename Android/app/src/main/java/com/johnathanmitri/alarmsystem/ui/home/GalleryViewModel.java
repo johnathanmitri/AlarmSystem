@@ -1,4 +1,4 @@
-package com.johnathanmitri.alarmsystem.ui.gallery;
+package com.johnathanmitri.alarmsystem.ui.home;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

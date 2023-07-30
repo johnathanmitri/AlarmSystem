@@ -9,3 +9,11 @@ circle for arm button
 circle with colored outside ring
 
 outside ring with animation that loops around filling it with red
+
+
+
+--- code:
+
+Websocket request model: For instance, getZoneEvents request is made to WebsocketManager, and when the reply is recieved, notify the requestee. 
+
+Change websocket coupling with UI. DONT BIND IT TO FRAGMENT ANYMORE. bind it to main activity. consider using "ConnectionListener" interface.

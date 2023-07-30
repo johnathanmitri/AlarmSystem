@@ -14,7 +14,9 @@
     <color name="disconnectedOverlayGrey">#b9292929</color> <!--50% transparent gray -->
 
     <color name="vibrantRed">#ff1507</color>
-    <color name="disarmedColor">#00fc00</color>
+
+    <color name="armedColor">#ff5757</color> <!-- #ff0000 -->
+    <color name="disarmedColor">#0dbd42</color>
 
 
     <color name="OfflineGrey">#ffdddd</color>

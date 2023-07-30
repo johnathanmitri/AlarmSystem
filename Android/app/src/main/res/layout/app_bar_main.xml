@@ -17,6 +17,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimaryVariant"
             android:elevation="0dp"
+            android:visibility="visible"
             app:popupTheme="@style/Theme.AlarmSystem.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>

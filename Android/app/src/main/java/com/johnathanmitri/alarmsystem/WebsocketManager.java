@@ -18,7 +18,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.johnathanmitri.alarmsystem.ui.home.HomeFragment;
+import com.johnathanmitri.alarmsystem.ui.zones.ZonesFragment;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -36,7 +36,7 @@ public class WebsocketManager
     private static WebSocketClient wsClient;
     //private static MainActivity mainActivity;
     private static Context mainActivityContext;
-    public static HomeFragment homeFragment;
+    public static ZonesFragment zonesFragment;
 
     private static boolean isAlive = true;
     private static final int pingTimerInterval = 2000;
@@ -219,7 +219,7 @@ public class WebsocketManager
                     if (wsClient.isOpen())
                     {
                         //connected = true;
-                        homeFragment.onWebsocketOpened();
+                        zonesFragment.onWebsocketOpened();
                         JSONObject authentication = Auth.getAuth(isSecure);
                         try
                         {
@@ -297,15 +297,15 @@ public class WebsocketManager
                             }
                             else if (jsonData.getString("intent").equals("getZoneEventsResult"))
                             {
-                                if (homeFragment != null && homeFragment.isVisible())
+                                if (zonesFragment != null && zonesFragment.isVisible())
                                 {
                                     String encodedBuffer = jsonData.getString("eventsBuffer");
                                     byte[] decodedBytes = Base64.decode(encodedBuffer, Base64.DEFAULT);
-                                    homeFragment.getActivity().runOnUiThread(new Runnable()
+                                    zonesFragment.getActivity().runOnUiThread(new Runnable()
                                     {
                                         public void run()
                                         {
-                                            homeFragment.showEventsWindow(decodedBytes);
+                                            zonesFragment.showEventsWindow(decodedBytes);
                                         }
                                     });
                                     //jsonData.
@@ -367,7 +367,8 @@ public class WebsocketManager
                 {
                     //connected = false;
                     wsClient = null;
-                    homeFragment.onWebsocketClosed();
+                    //TODO: RE-ENABLE THIS:
+                    //zonesFragment.onWebsocketClosed();
 
                     if (open)
                         WebsocketManager.connect();
@@ -381,7 +382,8 @@ public class WebsocketManager
                     Log.e("WEBSOCKET ERROR (void)", "");
                     ex.printStackTrace();
                     wsClient = null;
-                    homeFragment.onWebsocketClosed();
+                    //TODO: RE-ENABLE THIS:
+                    //zonesFragment.onWebsocketClosed();
 
                     if (open)
                         WebsocketManager.connect();
@@ -439,9 +441,9 @@ public class WebsocketManager
             return;
         }
 
-        if (homeFragment != null && homeFragment.isVisible())
+        if (zonesFragment != null && zonesFragment.isVisible())
         {
-            homeFragment.updateZoneList(orderedZoneArray);
+            zonesFragment.updateZoneList(orderedZoneArray);
         }
 
 

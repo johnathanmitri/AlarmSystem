@@ -2,7 +2,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_checked="true">
         <shape android:shape="oval">
-            <solid android:color="@color/vibrantRed" />
+            <solid android:color="@color/armedColor" />
             <size android:width="30dp" android:height="30dp" />
         </shape>
     </item>
@@ -11,6 +11,7 @@
             <solid android:color="@color/disarmedColor" />
             <size android:width="30dp" android:height="30dp" />
         </shape>
+
     </item>
     <item>
         <shape android:shape="oval">
