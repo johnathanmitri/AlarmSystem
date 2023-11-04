@@ -477,6 +477,7 @@ public class ZonesFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
+        WebsocketManager.zonesFragment = this;
         //ZonesViewModel zonesViewModel = new ViewModelProvider(this).get(ZonesViewModel.class);
 
         binding = FragmentZonesBinding.inflate(inflater, container, false);
@@ -508,7 +509,7 @@ public class ZonesFragment extends Fragment {
 
 
 
-        WebsocketManager.zonesFragment = this;
+
 
         //ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, testArr);
 

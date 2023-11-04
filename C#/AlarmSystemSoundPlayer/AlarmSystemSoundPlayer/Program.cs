@@ -11,8 +11,8 @@ namespace AlarmSystemSoundPlayer
         static void Main(string[] args)
         {
             
-            System.Media.SoundPlayer DooDooPlayer = new System.Media.SoundPlayer(AppDomain.CurrentDomain.BaseDirectory + @"DooDooSound.wav");
-            DooDooPlayer.PlaySync();
+            System.Media.SoundPlayer DingPlayer = new System.Media.SoundPlayer(AppDomain.CurrentDomain.BaseDirectory + @"DingSound.wav");
+            DingPlayer.PlaySync();
 
             System.Media.SoundPlayer namePlayer = new System.Media.SoundPlayer();
             while (true)
@@ -21,7 +21,7 @@ namespace AlarmSystemSoundPlayer
                 {
                     namePlayer.SoundLocation = AppDomain.CurrentDomain.BaseDirectory + Console.ReadLine();
 
-                    DooDooPlayer.PlaySync();
+                    DingPlayer.PlaySync();
 
                     namePlayer.PlaySync();         
                 }

@@ -112,7 +112,7 @@ public class WebsocketManager
             wsClient.send(msg);
     }
 
-    public static void connect()
+    private static void connect()
     {
         closeWebsocket();
 
@@ -219,7 +219,10 @@ public class WebsocketManager
                     if (wsClient.isOpen())
                     {
                         //connected = true;
-                        zonesFragment.onWebsocketOpened();
+                        if (zonesFragment != null)
+                        {
+                            zonesFragment.onWebsocketOpened();
+                        }
                         JSONObject authentication = Auth.getAuth(isSecure);
                         try
                         {
@@ -365,10 +368,10 @@ public class WebsocketManager
                 @Override
                 public void onClose(int code, String reason, boolean remote)
                 {
-                    //connected = false;
                     wsClient = null;
-                    //TODO: RE-ENABLE THIS:
-                    //zonesFragment.onWebsocketClosed();
+
+                    if (zonesFragment != null)
+                        zonesFragment.onWebsocketClosed();
 
                     if (open)
                         WebsocketManager.connect();
@@ -377,13 +380,12 @@ public class WebsocketManager
                 @Override
                 public void onError(Exception ex)
                 {
-                    //connected = false;
-                    //homeFragment.onWebsocketClosed();
                     Log.e("WEBSOCKET ERROR (void)", "");
                     ex.printStackTrace();
                     wsClient = null;
-                    //TODO: RE-ENABLE THIS:
-                    //zonesFragment.onWebsocketClosed();
+
+                    if (zonesFragment != null)
+                        zonesFragment.onWebsocketClosed();
 
                     if (open)
                         WebsocketManager.connect();

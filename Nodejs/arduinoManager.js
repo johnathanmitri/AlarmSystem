@@ -60,7 +60,7 @@ const timer = setInterval(function keepAlive()
         loggingManager.logZoneEvents(zonesUpdated);
     }
 
-}, 7500);  //7.5 seconds. Arduino should send every 5. 
+}, 3500);  //3.5 seconds. Arduino should send every 2. 
 
 sqlManager.makeQuery("SELECT * FROM dbo.Zones", data =>
 {

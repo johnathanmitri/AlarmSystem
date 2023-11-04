@@ -38,7 +38,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:overScrollMode="always"
-            tools:ignore="DuplicateClickableBoundsCheck,DuplicateClickableBoundsCheck">
+            tools:ignore="DuplicateClickableBoundsCheck,DuplicateClickableBoundsCheck"
+            android:orientation="vertical">
 
 
         </ListView>

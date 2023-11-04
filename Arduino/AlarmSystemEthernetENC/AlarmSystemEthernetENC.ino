@@ -12,7 +12,7 @@ static byte magicPacket[] = {0x6a, 0x38, 0x65, 0xe0, 0x1c, 0xab, 0x83}; // 0x6a3
 
 byte recieveBuffer[8]; //8 byte recieve buffer
 
-int updatePeriod = 5000; //update every 5 seconds
+int updatePeriod = 2; //update every 2 seconds
 unsigned long lastTime = 0; //represents last update time
 
 struct Zone
