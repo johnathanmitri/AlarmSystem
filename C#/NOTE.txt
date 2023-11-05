@@ -1,5 +1,0 @@
-NodeJS has no real support for playing audio to the speaker. There are some libraries but they are hacky, and they all suck.
-
-This is the C# Audio player to play Alarm Notifications to the speakers.
-
-Copy the release .exe into the nodejs directory, in the same folder as speakerManager.js
