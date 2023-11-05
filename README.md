@@ -10,3 +10,13 @@ Heres a demo of the zones being updated in real time as doors are "Opened" and "
 
 https://github.com/johnathanmitri/AlarmSystem/assets/28831749/faa8ea17-4ba5-41a7-85ee-6fcfc0a289cd
 
+If the app is closed, push notifications are sent to devices when a zone is opened:
+
+https://github.com/johnathanmitri/AlarmSystem/assets/28831749/1b4b97fa-b3a9-4cef-b8b2-3562ea73513f
+
+
+
+Users can view the event history of each zone:
+
+https://github.com/johnathanmitri/AlarmSystem/assets/28831749/5ebdd234-56ec-415e-8cd7-803a16773907
+
