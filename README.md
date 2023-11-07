@@ -2,9 +2,9 @@
 
 This is a work-in-progress Alarm System. The goal was to make a full Alarm System to use in my own house. 
 
-The User Interface is an Android App written in Java that would be installed on our devices. 
+The Frontend is an Android App written in Java that would be installed on our devices. 
 
-The server is written in Node.js, with Microsoft SQL Server for a database. To monitor the zones (Doors/Windows), Arduinos are used. 
+The Backend is written in Node.js, with Microsoft SQL Server for a database. To monitor the zones (Doors/Windows), Arduinos are used. 
 
 Monitoring a door is easy with a Magnet in the door, and a Magnetic Reed Switch in the door frame. To simulate this, I am simply opening and closing the circuit for each zone with a breadboard. 
 
