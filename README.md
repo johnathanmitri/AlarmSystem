@@ -1,6 +1,6 @@
 # AlarmSystem
 
-This is a work-in-progress Alarm System. The goal was to make a full Alarm System to use in my own house. 
+This is a work-in-progress Home Security System. The goal was to make a full Security System to use in my own house. 
 
 The Frontend is an Android App written in Java that would be installed on our devices. 
 
